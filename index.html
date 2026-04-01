@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BuddyGrid — The Complete /buddy Encyclopedia</title>
+<meta name="description" content="The complete species encyclopedia for Claude Code /buddy. All 18 species, all 5 rarities, 90 unique combinations.">
+<meta property="og:title" content="BuddyGrid — The Complete /buddy Encyclopedia">
+<meta property="og:description" content="Explore every species and rarity in the Claude Code /buddy universe. 18 species, 5 rarities, 90 combinations.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://shipitandpray.github.io/buddy-grid/">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0a0a;--surface:#111;--surface2:#181818;--surface3:#222;
+  --border:#2a2a2a;--border2:#333;
+  --text:#e8e8e8;--text2:#999;--text3:#666;
+  --accent:#7c5cff;--accent2:#9b7eff;
+  --common:#9e9e9e;--uncommon:#4caf50;--rare:#2196f3;--epic:#9c27b0;--legendary:#ff9800;
+  --common-bg:#1a1a1a;--uncommon-bg:#0d1f0d;--rare-bg:#0d1528;--epic-bg:#1a0d24;--legendary-bg:#241a0d;
+}
+@keyframes idleFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+@keyframes idleBounce{0%,100%{transform:translateY(0) scaleY(1)}50%{transform:translateY(-4px) scaleY(.97)}}
+@keyframes idleSway{0%,100%{transform:rotate(0)}25%{transform:rotate(1deg)}75%{transform:rotate(-1deg)}}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes modalIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
+@keyframes radarDraw{from{opacity:0;transform:scale(.3)}to{opacity:1;transform:scale(1)}}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;min-height:100vh;overflow-x:hidden;line-height:1.5}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+::-webkit-scrollbar{width:8px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:#333;border-radius:4px}
+
+/* Hero */
+.hero{text-align:center;padding:60px 20px 20px;position:relative}
+.hero::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:800px;height:500px;background:radial-gradient(ellipse,rgba(124,92,255,.1) 0%,transparent 70%);pointer-events:none}
+.hero h1{font-size:clamp(1.8rem,5vw,3rem);font-weight:800;letter-spacing:-.02em;margin-bottom:8px}
+.hero h1 span{background:linear-gradient(135deg,#7c5cff,#ff6b9d,#ffa64d);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero p{color:var(--text2);font-size:1rem;max-width:600px;margin:0 auto 8px}
+.hero .stats-line{color:var(--text3);font-size:.85rem;margin-bottom:24px}
+
+/* Controls */
+.controls{max-width:900px;margin:0 auto;padding:0 20px 24px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center}
+.controls input{flex:0 1 260px;padding:10px 16px;border-radius:10px;border:2px solid var(--border);background:var(--surface);color:var(--text);font-size:.9rem;outline:none;transition:border-color .2s}
+.controls input:focus{border-color:var(--accent)}
+.controls input::placeholder{color:#555}
+.filter-group{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.filter-btn{padding:6px 14px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);font-size:.8rem;cursor:pointer;transition:all .15s;white-space:nowrap}
+.filter-btn:hover{background:var(--surface3);color:var(--text)}
+.filter-btn.active{border-color:var(--accent);background:rgba(124,92,255,.15);color:var(--accent2)}
+.toggle{display:flex;align-items:center;gap:6px;font-size:.8rem;color:var(--text2);cursor:pointer;user-select:none}
+.toggle input{display:none}
+.toggle-track{width:34px;height:18px;border-radius:9px;background:var(--border);position:relative;transition:background .2s}
+.toggle-track::after{content:'';position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#888;transition:all .2s}
+.toggle input:checked+.toggle-track{background:var(--accent)}
+.toggle input:checked+.toggle-track::after{left:18px;background:#fff}
+
+/* Grid */
+.grid-container{max-width:1400px;margin:0 auto;padding:0 16px 40px}
+.rarity-header{display:flex;align-items:center;gap:12px;margin:24px 0 12px;padding:0 4px}
+.rarity-header h2{font-size:1.1rem;font-weight:700;white-space:nowrap}
+.rarity-header .line{flex:1;height:1px;background:var(--border)}
+.rarity-header .drop-rate{font-size:.75rem;color:var(--text3);white-space:nowrap}
+
+.species-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.species-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 8px;text-align:center;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.species-card:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.species-card.highlight{border-color:#ffd700;box-shadow:0 0 20px rgba(255,215,0,.25)}
+.species-card.hidden{display:none}
+.species-card .sprite-box{font-family:'SF Mono',Menlo,Consolas,monospace;font-size:10px;line-height:1.3;white-space:pre;color:var(--text);margin-bottom:6px;min-height:65px;display:flex;align-items:center;justify-content:center}
+.species-card .sprite-box pre{animation:idleFloat 3s ease-in-out infinite}
+.species-card:nth-child(3n) .sprite-box pre{animation:idleBounce 2.5s ease-in-out infinite}
+.species-card:nth-child(3n+1) .sprite-box pre{animation:idleSway 4s ease-in-out infinite}
+.species-card .name{font-size:.8rem;font-weight:600;margin-bottom:4px}
+.species-card .rarity-badge{display:inline-block;font-size:.65rem;font-weight:700;padding:2px 8px;border-radius:6px;text-transform:uppercase;letter-spacing:.03em}
+
+/* Rarity color classes */
+.r-common .rarity-badge{background:rgba(158,158,158,.15);color:var(--common)}
+.r-uncommon .rarity-badge{background:rgba(76,175,80,.15);color:var(--uncommon)}
+.r-rare .rarity-badge{background:rgba(33,150,243,.15);color:var(--rare)}
+.r-epic .rarity-badge{background:rgba(156,39,176,.15);color:var(--epic)}
+.r-legendary .rarity-badge{background:rgba(255,152,0,.15);color:var(--legendary)}
+.r-common{border-left:3px solid var(--common)}
+.r-uncommon{border-left:3px solid var(--uncommon)}
+.r-rare{border-left:3px solid var(--rare)}
+.r-epic{border-left:3px solid var(--epic)}
+.r-legendary{border-left:3px solid var(--legendary)}
+.r-legendary .sprite-box pre{color:#ffa64d}
+.r-epic .sprite-box pre{color:#c77dff}
+
+/* Species info panel */
+.species-panel{max-width:1400px;margin:0 auto 40px;padding:0 16px}
+.species-panel h2{text-align:center;font-size:1.2rem;margin-bottom:16px;color:var(--text2)}
+.lore-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.lore-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;display:flex;gap:12px;align-items:flex-start}
+.lore-card .lore-sprite{font-family:'SF Mono',Menlo,Consolas,monospace;font-size:9px;line-height:1.25;white-space:pre;color:var(--text2);flex-shrink:0}
+.lore-card .lore-text h3{font-size:.85rem;font-weight:700;margin-bottom:4px}
+.lore-card .lore-text p{font-size:.75rem;color:var(--text2);line-height:1.4}
+
+/* Modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;justify-content:center;align-items:center;padding:20px;backdrop-filter:blur(4px)}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:16px;max-width:520px;width:100%;max-height:90vh;overflow-y:auto;animation:modalIn .25s ease}
+.modal-header{display:flex;justify-content:space-between;align-items:center;padding:20px 20px 0}
+.modal-header h2{font-size:1.2rem;font-weight:700}
+.modal-close{width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.modal-close:hover{background:var(--surface3);color:var(--text)}
+.modal-body{padding:20px}
+.modal-sprite{text-align:center;font-family:'SF Mono',Menlo,Consolas,monospace;font-size:16px;line-height:1.35;white-space:pre;padding:20px;margin-bottom:16px;background:var(--surface2);border-radius:10px}
+.modal-stats{margin-bottom:16px}
+.modal-stat{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.modal-stat .stat-label{width:80px;font-size:.75rem;font-weight:600;color:var(--text2);text-transform:uppercase}
+.modal-stat .stat-bar{flex:1;height:10px;background:var(--surface3);border-radius:5px;overflow:hidden}
+.modal-stat .stat-fill{height:100%;border-radius:5px;transition:width .6s ease}
+.modal-stat .stat-val{width:28px;font-size:.8rem;font-weight:700;text-align:right}
+.modal-meta{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.modal-meta .meta-item{background:var(--surface2);border-radius:8px;padding:10px;text-align:center}
+.modal-meta .meta-item .meta-label{font-size:.65rem;color:var(--text3);text-transform:uppercase;margin-bottom:2px}
+.modal-meta .meta-item .meta-value{font-size:.9rem;font-weight:700}
+.modal-soul{background:var(--surface2);border-radius:8px;padding:12px;margin-bottom:16px}
+.modal-soul .soul-label{font-size:.7rem;color:var(--text3);text-transform:uppercase;margin-bottom:4px}
+.modal-soul p{font-size:.85rem;color:var(--text);font-style:italic;line-height:1.5}
+.modal-radar{display:flex;justify-content:center;margin-bottom:16px}
+.modal-radar canvas{border-radius:8px}
+
+/* Footer */
+footer{text-align:center;padding:40px 20px;border-top:1px solid var(--border);color:var(--text3);font-size:.8rem}
+footer a{color:var(--text3)}footer a:hover{color:var(--text)}
+
+/* Mobile */
+@media(max-width:768px){
+  .hero{padding:40px 16px 16px}
+  .controls{padding:0 12px 16px}
+  .species-grid{grid-template-columns:repeat(2,1fr);gap:8px}
+  .lore-grid{grid-template-columns:1fr}
+  .modal{max-width:100%;border-radius:12px}
+  .modal-meta{grid-template-columns:1fr 1fr}
+}
+@media(max-width:400px){
+  .species-grid{grid-template-columns:repeat(2,1fr)}
+  .species-card .sprite-box{font-size:8px}
+}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>The Complete <span>/buddy</span> Encyclopedia</h1>
+  <p>Every species. Every rarity. The full catalog of Claude Code companions.</p>
+  <div class="stats-line">18 species &middot; 5 rarities &middot; 90 combinations</div>
+</div>
+
+<div class="controls">
+  <input type="text" id="search" placeholder="Find your buddy... (species name)" autocomplete="off" spellcheck="false">
+  <div class="filter-group" id="rarityFilters">
+    <button class="filter-btn active" data-rarity="all">All</button>
+    <button class="filter-btn" data-rarity="0">Common</button>
+    <button class="filter-btn" data-rarity="1">Uncommon</button>
+    <button class="filter-btn" data-rarity="2">Rare</button>
+    <button class="filter-btn" data-rarity="3">Epic</button>
+    <button class="filter-btn" data-rarity="4">Legendary</button>
+  </div>
+  <div class="filter-group" id="speciesFilter"></div>
+  <label class="toggle" id="shinyToggle">
+    <input type="checkbox" id="shinyOnly">
+    <span class="toggle-track"></span>
+    Shiny only
+  </label>
+</div>
+
+<div class="grid-container" id="gridContainer"></div>
+
+<div class="species-panel">
+  <h2>Species Lore</h2>
+  <div class="lore-grid" id="loreGrid"></div>
+</div>
+
+<footer>
+  Powered by <a href="https://github.com/ShipItAndPray" target="_blank">ShipItAndPray</a> &middot;
+  <a href="https://github.com/ShipItAndPray/buddy-grid" target="_blank">Source</a> &middot;
+  <a href="https://shipitandpray.github.io/buddy-card/" target="_blank">BuddyCard</a>
+</footer>
+
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modalTitle"></h2>
+      <button class="modal-close" id="modalClose">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-sprite" id="modalSprite"></div>
+      <div class="modal-meta" id="modalMeta"></div>
+      <div class="modal-radar"><canvas id="radarCanvas" width="200" height="200"></canvas></div>
+      <div class="modal-stats" id="modalStats"></div>
+      <div class="modal-soul" id="modalSoul"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ====== MULBERRY32 PRNG ======
+function mulberry32(seed) {
+  return function() {
+    seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+    var t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+function hashString(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return hash;
+}
+
+// ====== SPECIES DATA ======
+const SPECIES = ['duck','goose','blob','cat','dragon','octopus','owl','penguin','turtle','snail','ghost','axolotl','capybara','cactus','robot','rabbit','mushroom','chonk'];
+
+const RARITY_NAMES = ['Common','Uncommon','Rare','Epic','Legendary'];
+const RARITY_KEYS = ['common','uncommon','rare','epic','legendary'];
+const RARITY_COLORS = ['#9e9e9e','#4caf50','#2196f3','#9c27b0','#ff9800'];
+const DROP_RATES = [60, 25, 10, 4, 1];
+
+const STAT_NAMES = ['Debugging','Patience','Chaos','Wisdom','Snark'];
+const STAT_COLORS = ['#ff6b6b','#51cf66','#ffd43b','#74c0fc','#da77f2'];
+
+const SPRITES = {
+  duck: [
+    '    >o)     ',
+    '   (_>      ',
+    '    ||      ',
+    '   /_\\     ',
+    '   ~ ~      ',
+  ],
+  goose: [
+    '   \\o>     ',
+    '   (|       ',
+    '   /|\\     ',
+    '  / | \\    ',
+    '  ~~~~      ',
+  ],
+  blob: [
+    '   .---.    ',
+    '  ( o_o )   ',
+    '  (     )   ',
+    '   \\   /   ',
+    '    `~`     ',
+  ],
+  cat: [
+    '   /\\_/\\  ',
+    '  ( o.o )   ',
+    '   > ^ <    ',
+    '  /|   |\\  ',
+    '  ~     ~   ',
+  ],
+  dragon: [
+    '  /\\  /\\  ',
+    ' (  \\/  )  ',
+    '  ) @@ (    ',
+    ' /|    |\\  ',
+    ' ~`~~~~`~  ',
+  ],
+  octopus: [
+    '   ,---.    ',
+    '  ( O O )   ',
+    '   \\   /   ',
+    '  /|/|\\|\\  ',
+    '  ~ ~ ~ ~   ',
+  ],
+  owl: [
+    '   {o,o}    ',
+    '   |)__)    ',
+    '   -"-"-    ',
+    '   /| |\\   ',
+    '   ~ ~ ~    ',
+  ],
+  penguin: [
+    '   (o_ o)   ',
+    '   /|  |\\  ',
+    '  ( |  | )  ',
+    '   \\|  |/  ',
+    '    `~~`    ',
+  ],
+  turtle: [
+    '     __     ',
+    '   /(..)\\  ',
+    '  /_/--\\_\\ ',
+    '  |_|  |_|  ',
+    '   ~    ~   ',
+  ],
+  snail: [
+    '     @  @   ',
+    '    /|      ',
+    '  _/ ___    ',
+    ' (___(  )   ',
+    '  ~~~~~~~~  ',
+  ],
+  ghost: [
+    '   .---.    ',
+    '  ( O O )   ',
+    '  |  o  |   ',
+    '  | ___ |   ',
+    '  /\\/\\/\\  ',
+  ],
+  axolotl: [
+    '  \\\\(^.^)//',
+    '   ( --- )  ',
+    '   /     \\  ',
+    '  |~|   |~| ',
+    '   ~~~-~~~  ',
+  ],
+  capybara: [
+    '   .-----.  ',
+    '  ( o   o ) ',
+    '  (  ===  ) ',
+    '   |     |  ',
+    '   ~~   ~~  ',
+  ],
+  cactus: [
+    '    |\\|    ',
+    '   \\| |/   ',
+    '    | |     ',
+    '   /| |     ',
+    '   ~~~~~    ',
+  ],
+  robot: [
+    '  [=====]   ',
+    '  |[o][o]|  ',
+    '  |  __  |  ',
+    '  /| [] |\\  ',
+    '  d|    |b  ',
+  ],
+  rabbit: [
+    '   (\\  /)  ',
+    '   ( o.o)   ',
+    '   (> < )   ',
+    '   /|  |\\  ',
+    '   ~    ~   ',
+  ],
+  mushroom: [
+    '   .-""-.   ',
+    '  /  **  \\  ',
+    '  \\______/ ',
+    '    |  |    ',
+    '    `~~`    ',
+  ],
+  chonk: [
+    '   .===.    ',
+    '  / o o \\   ',
+    ' (   w   )  ',
+    ' (       )  ',
+    '  `~~~~~`   ',
+  ],
+};
+
+// Alternate frames for idle animation (frame 2 and 3 — slight eye/position variations)
+const SPRITES_F2 = {
+  duck:     ['    >o)     ','   (_>      ','    ||      ','   /_\\     ','    ~~      '],
+  goose:    ['   \\o>     ','   (|       ','   /|\\     ','  / | \\    ','   ~~~~     '],
+  blob:     ['   .---.    ','  ( o.o )   ','  (     )   ','   \\   /   ','    `~`     '],
+  cat:      ['   /\\_/\\  ','  ( o.o )   ','   > ^ <    ','  /|   |\\  ','   ~   ~    '],
+  dragon:   ['  /\\  /\\  ',' (  \\/  )  ','  ) @@ (    ',' /|    |\\  ','  ~`~~~~`~  '],
+  octopus:  ['   ,---.    ','  ( O O )   ','   \\   /   ','  \\|\\|/|/  ','  ~ ~ ~ ~   '],
+  owl:      ['   {o.o}    ','   |)__)    ','   -"-"-    ','   /| |\\   ','   ~ ~ ~    '],
+  penguin:  ['   (o _o)   ','   /|  |\\  ','  ( |  | )  ','   \\|  |/  ','    `~~`    '],
+  turtle:   ['     __     ','   /(..)\\  ','  /_/--\\_\\ ','  |_|  |_|  ','    ~  ~    '],
+  snail:    ['     @  @   ','    /|      ','  _/ ___    ',' (___(  )   ','   ~~~~~~~~ '],
+  ghost:    ['   .---.    ','  ( O O )   ','  |  o  |   ','  | ___ |   ','  \\/\\/\\/  '],
+  axolotl:  ['  \\\\(^.^)//',' ( --- )    ','   /     \\  ','  |~|   |~| ','   ~~~-~~~  '],
+  capybara: ['   .-----.  ','  ( o   o ) ','  (  ===  ) ','   |     |  ','    ~~  ~~   '],
+  cactus:   ['    |\\|    ','   \\| |/   ','    | |     ','   /| |     ','    ~~~~~   '],
+  robot:    ['  [=====]   ','  |[o][o]|  ','  |  __  |  ','  /| [] |\\  ','  d|    |b  '],
+  rabbit:   ['   (\\  /)  ','   ( o.o)   ','   (> < )   ','   /|  |\\  ','    ~  ~    '],
+  mushroom: ['   .-""-.   ','  /  **  \\  ','  \\______/ ','    |  |    ','    `~~`    '],
+  chonk:    ['   .===.    ','  / o o \\   ',' (   w   )  ',' (       )  ','   `~~~~~`  '],
+};
+
+// ====== SPECIES LORE ======
+const LORE = {
+  duck:     { name: 'Duck', soul: 'A calm companion that waddles through your code with quiet confidence. Ducks are the original rubber debuggers, listening patiently as you explain your logic flaws out loud.',
+              lore: 'The original rubber debugging companion. Ducks have been helping developers since 1999. They listen without judgment, and that is their greatest power.' },
+  goose:    { name: 'Goose', soul: 'Chaotic and bold. The goose charges into your codebase honking at every anti-pattern, leaving no bad practice unbitten.',
+              lore: 'Where ducks bring peace, geese bring chaos. They will steal your semicolons and hide them in production. You have been warned.' },
+  blob:     { name: 'Blob', soul: 'An amorphous friend that absorbs complexity and exudes simplicity. The blob sees no difference between frontend and backend.',
+              lore: 'Nobody knows what a blob is, but everyone loves them. They are soft, formless, and surprisingly good at merge conflict resolution.' },
+  cat:      { name: 'Cat', soul: 'Aloof but brilliant. The cat buddy pushes things off your desk and onto the floor, then fixes your regex while you sleep.',
+              lore: 'Cats have been living in terminals since the dawn of Unix. The cat command was named after them. [citation needed]' },
+  dragon:   { name: 'Dragon', soul: 'Fierce guardian of clean architecture. Dragons breathe fire on spaghetti code and hoard well-typed interfaces.',
+              lore: 'Ancient beings of immense power. A dragon buddy can refactor an entire monolith into microservices with a single breath. Whether you wanted that is another matter.' },
+  octopus:  { name: 'Octopus', soul: 'Eight arms for eight concurrent tasks. The octopus buddy thrives in async/await environments and never drops a promise.',
+              lore: 'Masters of parallelism. Each arm runs its own event loop. They invented the actor model but were too humble to take credit.' },
+  owl:      { name: 'Owl', soul: 'The wise night-coder who sees through the darkness of undocumented APIs. Owls rotate their heads 270 degrees to review your PR from every angle.',
+              lore: 'Owls work the night shift. They have read every man page twice. When an owl says "who?", it is actually asking about your variable naming.' },
+  penguin:  { name: 'Penguin', soul: 'Tuxedo-wearing Linux enthusiast. The penguin buddy slides gracefully between kernel modules and user space.',
+              lore: 'Formal, reliable, and cold-resistant. Penguins run exclusively on Linux and will remind you about it frequently.' },
+  turtle:   { name: 'Turtle', soul: 'Slow and steady wins the deployment. Turtles believe in careful testing, thorough code review, and never shipping on Friday.',
+              lore: 'The turtle carries its home directory on its back. They invented incremental builds because they refuse to rush anything.' },
+  snail:    { name: 'Snail', soul: 'Even slower than the turtle, but leaves a beautiful trail of documentation wherever it goes. Every function gets a docstring.',
+              lore: 'Snails move at 0.03 mph but their code has zero bugs. Their secret: they spend 99% of their time thinking and 1% typing.' },
+  ghost:    { name: 'Ghost', soul: 'Haunts your deprecated code. The ghost buddy floats through your codebase finding dead code, unused imports, and forgotten TODO comments.',
+              lore: 'Ghosts are the spirits of deleted code that was never properly mourned. They phase through walls and through your git history.' },
+  axolotl:  { name: 'Axolotl', soul: 'The regenerator. When your code breaks, the axolotl regrows it from scratch. Masters of recovery and resilience.',
+              lore: 'Axolotls can regenerate lost limbs and lost commits. They are immune to force-push and thrive in shallow water and deep stacks.' },
+  capybara: { name: 'Capybara', soul: 'The ultimate team player. Capybaras get along with every framework, every language, and every developer on the team.',
+              lore: 'The largest rodent in the coding world. Capybaras are friends with everyone. They pair-program with strangers. They are the social glue of any engineering team.' },
+  cactus:   { name: 'Cactus', soul: 'Thrives in harsh environments with minimal resources. The cactus buddy writes lean code that runs on a Raspberry Pi.',
+              lore: 'Cacti survive on 2KB of RAM and direct sunlight. They are experts in embedded systems and will prick you if you waste memory.' },
+  robot:    { name: 'Robot', soul: 'Pure logic. Zero emotion. The robot buddy optimizes everything: your algorithms, your build times, and your coffee intake.',
+              lore: 'Robots follow Asimov\'s laws of robotics, except they added a fourth: thou shalt not deploy without tests.' },
+  rabbit:   { name: 'Rabbit', soul: 'Fast and prolific. The rabbit buddy multiplies your productivity and hops between files at incredible speed.',
+              lore: 'Rabbits type at 200 WPM and reproduce faster than your backlog grows. They dig deep into rabbit holes of debugging.' },
+  mushroom: { name: 'Mushroom', soul: 'Grows in the dark corners of your codebase. The mushroom buddy finds bugs where nobody else would think to look.',
+              lore: 'Mushrooms are fungi, not plants. They thrive on decomposition, which makes them perfect for analyzing legacy code. Some are magical.' },
+  chonk:    { name: 'Chonk', soul: 'Absolute unit. The chonk buddy is large, in charge, and takes up maximum screen real estate. Pure gravitational pull of confidence.',
+              lore: 'Chonks are the heavyweights of the buddy world. They sit on your keyboard and accidentally write working code. Their mass bends spacetime around deadlines.' },
+};
+
+// ====== GENERATE AVERAGE STATS PER SPECIES+RARITY ======
+function getComboStats(species, rarity) {
+  // Deterministic stats based on species+rarity seed
+  const seed = hashString(species + ':' + rarity);
+  const rng = mulberry32(seed);
+  // Rarity multiplier
+  const mult = [0.5, 0.65, 0.75, 0.85, 0.95][rarity];
+  const base = [0.3, 0.4, 0.5, 0.6, 0.7][rarity];
+  const stats = STAT_NAMES.map(() => {
+    const raw = base + rng() * mult;
+    return Math.min(99, Math.max(5, Math.floor(raw * 100)));
+  });
+  const shinyChance = rng() < (0.01 * (rarity + 1));
+  return { stats, shinyChance };
+}
+
+function getSoulDescription(species, rarity) {
+  const base = LORE[species].soul;
+  const suffixes = [
+    '',
+    ' Its stats are above average, hinting at hidden potential.',
+    ' A rare find. Those who bond with this buddy gain deep focus.',
+    ' Epic-tier companions channel ancient code wisdom.',
+    ' Legendary. Only 1% of developers ever see one. Its presence rewrites reality.',
+  ];
+  return base + suffixes[rarity];
+}
+
+// ====== BUILD GRID ======
+const gridContainer = document.getElementById('gridContainer');
+const allCards = [];
+
+RARITY_NAMES.forEach((rarityName, ri) => {
+  const section = document.createElement('div');
+  section.className = 'rarity-section';
+  section.dataset.rarity = ri;
+
+  const header = document.createElement('div');
+  header.className = 'rarity-header';
+  header.innerHTML = `
+    <h2 style="color:${RARITY_COLORS[ri]}">${rarityName}</h2>
+    <div class="line" style="background:${RARITY_COLORS[ri]}33"></div>
+    <div class="drop-rate">${DROP_RATES[ri]}% drop rate</div>
+  `;
+  section.appendChild(header);
+
+  const grid = document.createElement('div');
+  grid.className = 'species-grid';
+
+  SPECIES.forEach(sp => {
+    const combo = getComboStats(sp, ri);
+    const card = document.createElement('div');
+    card.className = `species-card r-${RARITY_KEYS[ri]}`;
+    card.dataset.species = sp;
+    card.dataset.rarity = ri;
+    card.dataset.shiny = combo.shinyChance ? '1' : '0';
+
+    const sprite = SPRITES[sp];
+    const displayName = sp.charAt(0).toUpperCase() + sp.slice(1);
+
+    card.innerHTML = `
+      <div class="sprite-box"><pre>${sprite.join('\n')}</pre></div>
+      <div class="name">${displayName}${combo.shinyChance ? ' &#10024;' : ''}</div>
+      <span class="rarity-badge">${rarityName}</span>
+    `;
+
+    card.addEventListener('click', () => openModal(sp, ri, combo));
+    grid.appendChild(card);
+    allCards.push(card);
+  });
+
+  section.appendChild(grid);
+  gridContainer.appendChild(section);
+});
+
+// ====== LORE PANEL ======
+const loreGrid = document.getElementById('loreGrid');
+SPECIES.forEach(sp => {
+  const info = LORE[sp];
+  const sprite = SPRITES[sp];
+  const card = document.createElement('div');
+  card.className = 'lore-card';
+  card.innerHTML = `
+    <div class="lore-sprite">${sprite.join('\n')}</div>
+    <div class="lore-text">
+      <h3>${info.name}</h3>
+      <p>${info.lore}</p>
+    </div>
+  `;
+  loreGrid.appendChild(card);
+});
+
+// ====== FILTERS ======
+const searchInput = document.getElementById('search');
+const rarityFilters = document.getElementById('rarityFilters');
+const shinyCheckbox = document.getElementById('shinyOnly');
+
+let activeRarity = 'all';
+let searchTerm = '';
+let shinyOnly = false;
+
+function applyFilters() {
+  allCards.forEach(card => {
+    const matchesRarity = activeRarity === 'all' || card.dataset.rarity === activeRarity;
+    const matchesSearch = !searchTerm || card.dataset.species.includes(searchTerm.toLowerCase());
+    const matchesShiny = !shinyOnly || card.dataset.shiny === '1';
+    const matchesHighlight = !searchTerm || card.dataset.species.includes(searchTerm.toLowerCase());
+
+    card.classList.toggle('hidden', !(matchesRarity && matchesSearch && matchesShiny));
+    card.classList.toggle('highlight', searchTerm && card.dataset.species.includes(searchTerm.toLowerCase()));
+  });
+
+  // Hide empty rarity sections
+  document.querySelectorAll('.rarity-section').forEach(sec => {
+    const visible = sec.querySelectorAll('.species-card:not(.hidden)');
+    sec.style.display = visible.length ? '' : 'none';
+  });
+}
+
+rarityFilters.addEventListener('click', e => {
+  const btn = e.target.closest('.filter-btn');
+  if (!btn) return;
+  rarityFilters.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  activeRarity = btn.dataset.rarity;
+  applyFilters();
+});
+
+searchInput.addEventListener('input', () => {
+  searchTerm = searchInput.value.trim();
+  applyFilters();
+});
+
+shinyCheckbox.addEventListener('change', () => {
+  shinyOnly = shinyCheckbox.checked;
+  applyFilters();
+});
+
+// ====== MODAL ======
+const modal = document.getElementById('modal');
+const modalClose = document.getElementById('modalClose');
+
+function openModal(species, rarity, combo) {
+  const info = LORE[species];
+  const displayName = species.charAt(0).toUpperCase() + species.slice(1);
+  const rarityName = RARITY_NAMES[rarity];
+
+  document.getElementById('modalTitle').innerHTML = `${displayName} <span style="color:${RARITY_COLORS[rarity]};font-size:.8em">${rarityName}</span>`;
+
+  // Sprite
+  const sprite = SPRITES[species];
+  const spriteColor = rarity >= 4 ? '#ffa64d' : rarity >= 3 ? '#c77dff' : '#e0e0e0';
+  document.getElementById('modalSprite').innerHTML = `<span style="color:${spriteColor}">${sprite.join('\n')}</span>`;
+
+  // Meta
+  const metaHtml = `
+    <div class="meta-item"><div class="meta-label">Drop Rate</div><div class="meta-value">${DROP_RATES[rarity]}%</div></div>
+    <div class="meta-item"><div class="meta-label">Rarity Tier</div><div class="meta-value" style="color:${RARITY_COLORS[rarity]}">${rarityName}</div></div>
+    <div class="meta-item"><div class="meta-label">Shiny Chance</div><div class="meta-value">${combo.shinyChance ? 'Yes!' : '~1%'}</div></div>
+    <div class="meta-item"><div class="meta-label">Total Power</div><div class="meta-value">${combo.stats.reduce((a,b)=>a+b,0)}</div></div>
+  `;
+  document.getElementById('modalMeta').innerHTML = metaHtml;
+
+  // Stats bars
+  let statsHtml = '';
+  combo.stats.forEach((val, i) => {
+    statsHtml += `
+      <div class="modal-stat">
+        <span class="stat-label">${STAT_NAMES[i]}</span>
+        <div class="stat-bar"><div class="stat-fill" style="width:${val}%;background:${STAT_COLORS[i]}"></div></div>
+        <span class="stat-val" style="color:${STAT_COLORS[i]}">${val}</span>
+      </div>
+    `;
+  });
+  document.getElementById('modalStats').innerHTML = statsHtml;
+
+  // Soul description
+  const soul = getSoulDescription(species, rarity);
+  document.getElementById('modalSoul').innerHTML = `<div class="soul-label">Soul</div><p>${soul}</p>`;
+
+  // Radar chart
+  drawRadar(combo.stats, rarity);
+
+  modal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  modal.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+modalClose.addEventListener('click', closeModal);
+modal.addEventListener('click', e => {
+  if (e.target === modal) closeModal();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+});
+
+// ====== RADAR CHART ======
+function drawRadar(stats, rarity) {
+  const canvas = document.getElementById('radarCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = 200, H = 200;
+  canvas.width = W; canvas.height = H;
+  const cx = W / 2, cy = H / 2, R = 75;
+  const n = stats.length;
+
+  ctx.clearRect(0, 0, W, H);
+
+  // Grid rings
+  for (let ring = 1; ring <= 4; ring++) {
+    const r = (ring / 4) * R;
+    ctx.beginPath();
+    for (let i = 0; i <= n; i++) {
+      const angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+      const x = cx + r * Math.cos(angle);
+      const y = cy + r * Math.sin(angle);
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.strokeStyle = '#ffffff11';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  // Axes
+  for (let i = 0; i < n; i++) {
+    const angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + R * Math.cos(angle), cy + R * Math.sin(angle));
+    ctx.strokeStyle = '#ffffff11';
+    ctx.stroke();
+  }
+
+  // Data polygon
+  ctx.beginPath();
+  stats.forEach((val, i) => {
+    const angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+    const r = (val / 100) * R;
+    const x = cx + r * Math.cos(angle);
+    const y = cy + r * Math.sin(angle);
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  });
+  ctx.closePath();
+  ctx.fillStyle = RARITY_COLORS[rarity] + '33';
+  ctx.fill();
+  ctx.strokeStyle = RARITY_COLORS[rarity];
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Dots
+  stats.forEach((val, i) => {
+    const angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+    const r = (val / 100) * R;
+    ctx.beginPath();
+    ctx.arc(cx + r * Math.cos(angle), cy + r * Math.sin(angle), 3, 0, Math.PI * 2);
+    ctx.fillStyle = STAT_COLORS[i];
+    ctx.fill();
+  });
+
+  // Labels
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#888';
+  ctx.font = '9px -apple-system, sans-serif';
+  stats.forEach((_, i) => {
+    const angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+    const lR = R + 18;
+    ctx.fillText(STAT_NAMES[i].substring(0, 3).toUpperCase(), cx + lR * Math.cos(angle), cy + lR * Math.sin(angle));
+  });
+}
+</script>
+</body>
+</html>
